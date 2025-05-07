@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Image Generator</title>
+  <style>
+    /* Base Styles */
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(45deg, #1f4037, #99f2c8);
+      background-size: 400% 400%;
+      animation: gradientBG 10s ease infinite;
+      color: #fff;
+      text-align: center;
+      padding: 50px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 30px;
+      text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+
+    input[type="file"] {
+      margin: 20px 0;
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 2px solid #fff;
+      background-color: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      transition: 0.3s;
+    }
+
+    input[type="file"]:focus {
+      outline: none;
+      border: 2px solid #99f2c8;
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    button {
+      padding: 12px 20px;
+      background-color: #4CAF50;
+      color: white;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    #preview {
+      max-width: 100%;
+      height: auto;
+      margin: 20px 0;
+      display: none;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    #qr {
+      margin-top: 30px;
+    }
+
+    #downloadBtn {
+      background-color: #FF5722;
+      color: white;
+      padding: 12px 20px;
+      font-size: 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: none;
+      display: none;
+      margin-top: 20px;
+    }
+
+    #downloadBtn:hover {
+      background-color: #E64A19;
+    }
+
+    /* Animation for Gradient */
+    @keyframes gradientBG {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    /* Responsive Design */
+    @media screen and (max-width: 768px) {
+      h1 {
+        font-size: 2rem;
+      }
+      input[type="file"], button, #downloadBtn {
+        width: 80%;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+      input[type="file"], button, #downloadBtn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>🖼️ Upload Image → 🔗 Get QR Code</h1>
+  <form id="uploadForm" enctype="multipart/form-data">
+    <input type="file" name="image" id="imageInput" accept="image/*" required>
+    <br>
+    <button type="submit">Generate QR</button>
+  </form>
+
+  <img id="preview" src="" alt="Image Preview" />
+  <div id="qr"></div>
+  <button id="downloadBtn">Download QR Code</button>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const imageInput = document.getElementById('imageInput');
+    const preview = document.getElementById('preview');
+    const qrDiv = document.getElementById('qr');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    // Handle image preview
+    imageInput.addEventListener('change', () => {
+      const file = imageInput.files[0];
+      if (file) {
+        const fileType = file.type.split('/')[0];
+        if (fileType === 'image') {
+          preview.src = URL.createObjectURL(file);
+          preview.style.display = 'block';
+        } else {
+          alert('Please upload a valid image file (e.g., .jpg, .png)');
+          imageInput.value = '';
+          preview.style.display = 'none';
+        }
+      }
+    });
+
+    // Handle form submission and upload image
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+
+      const res = await fetch('/upload', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+
+      const data = await res.json();
+      qrDiv.innerHTML = `<img id="qrImage" src="${data.qr}" alt="QR Code">`;
+
+      // Show the download button
+      downloadBtn.style.display = 'block';
+      downloadBtn.addEventListener('click', () => {
+        const qrImage = document.getElementById('qrImage');
+        const link = document.createElement('a');
+        link.href = qrImage.src;
+        link.download = 'qr-code.png';
+        link.click();
+      });
+    });
+  </script>
+</body>
+</html>
